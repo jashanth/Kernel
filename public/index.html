@@ -6,120 +6,77 @@
     <title>MoneyGuard Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-black text-white flex">
+<body class="bg-gray-900 text-white">
 
     <!-- Sidebar -->
-    <aside class="w-64 bg-gray-900 h-screen p-5">
-        <h1 class="text-blue-400 text-xl font-bold">💰 MoneyGuard</h1>
-        <p class="text-gray-400 mt-2">👤 Welcome back!<br> <span class="font-semibold">Adam Jacobs</span></p>
-        
-        <nav class="mt-6">
-            <ul>
-                <li class="mb-3">
-                    <a href="#" class="block px-4 py-2 bg-blue-600 rounded-md">📊 Dashboard</a>
-                </li>
-                <li class="mb-3">
-                    <a href="#" class="block px-4 py-2 bg-gray-800 rounded-md hover:bg-gray-700">💼 Investments</a>
-                </li>
-                <li class="mb-3">
-                    <a href="#" class="block px-4 py-2 bg-gray-800 rounded-md hover:bg-gray-700">💳 My Cards</a>
-                </li>
-                <li class="mb-3">
-                    <a href="#" class="block px-4 py-2 bg-gray-800 rounded-md hover:bg-gray-700">📜 Transactions</a>
-                </li>
-            </ul>
-        </nav>
+    <div class="flex h-screen">
+        <aside class="bg-black w-64 p-6">
+            <h2 class="text-2xl font-bold text-blue-400">💰 MoneyGuard</h2>
+            <p class="mt-2 text-gray-400">Welcome back! <strong id="username">User</strong></p>
+            
+            <nav class="mt-6 space-y-2">
+                <a href="#" class="block py-2 px-4 bg-blue-600 rounded">📊 Dashboard</a>
+                <a href="#" class="block py-2 px-4 hover:bg-gray-700">💼 Investments</a>
+                <a href="#" class="block py-2 px-4 hover:bg-gray-700">💳 My Cards</a>
+                <a href="#" class="block py-2 px-4 hover:bg-gray-700">📜 Transactions</a>
+            </nav>
 
-        <button class="mt-6 w-full bg-red-600 hover:bg-red-700 py-2 rounded-md">🚪 Logout</button>
-    </aside>
+            <button id="logoutBtn" class="mt-6 w-full bg-red-600 py-2 rounded">🚪 Logout</button>
+        </aside>
 
-    <!-- Main Content -->
-    <main class="flex-1 p-6">
+        <!-- Main Content -->
+        <main class="flex-1 p-6">
+            <h1 class="text-3xl font-bold">Dashboard</h1>
 
-        <!-- Dashboard Cards -->
-        <div class="grid grid-cols-3 gap-4">
-            <div class="bg-gray-800 p-6 rounded-lg border border-blue-500 text-center">
-                <h3 class="text-lg font-semibold text-gray-300">Total Balance</h3>
-                <p class="text-2xl font-bold text-green-400">₹1,80,000.00</p>
+            <!-- Balance Cards -->
+            <div class="grid grid-cols-3 gap-4 mt-6">
+                <div class="bg-gray-800 p-6 rounded-lg">
+                    <h3 class="text-gray-400">Total Balance</h3>
+                    <p id="totalBalance" class="text-2xl font-bold">₹1,80,000.00</p>
+                </div>
+                <div class="bg-gray-800 p-6 rounded-lg">
+                    <h3 class="text-gray-400">Total Income</h3>
+                    <p id="totalIncome" class="text-2xl font-bold">₹3,50,000.00</p>
+                </div>
+                <div class="bg-gray-800 p-6 rounded-lg">
+                    <h3 class="text-gray-400">Total Expenses</h3>
+                    <p id="totalExpenses" class="text-2xl font-bold">₹83,000.00</p>
+                </div>
             </div>
-            <div class="bg-gray-800 p-6 rounded-lg border border-blue-500 text-center">
-                <h3 class="text-lg font-semibold text-gray-300">Total Income</h3>
-                <p class="text-2xl font-bold text-green-400">₹3,50,000.00</p>
-            </div>
-            <div class="bg-gray-800 p-6 rounded-lg border border-blue-500 text-center">
-                <h3 class="text-lg font-semibold text-gray-300">Total Expenses</h3>
-                <p class="text-2xl font-bold text-red-400">₹83,000.00</p>
-            </div>
-        </div>
 
-        <!-- Spending Summary -->
-        <div class="bg-gray-800 p-6 rounded-lg mt-6">
-            <h3 class="text-xl font-semibold text-gray-300">Spending Summary</h3>
-            <div class="flex justify-center items-center h-48">
-                <canvas id="spendingChart" class="w-60"></canvas>
+            <!-- Add Expense Form -->
+            <div class="bg-gray-800 p-6 rounded-lg mt-6">
+                <h3 class="text-xl font-semibold">💰 Add Expense</h3>
+                <form id="expenseForm" class="mt-4 flex gap-2">
+                    <input type="text" id="expenseName" placeholder="Expense Name" class="w-1/4 px-4 py-2 rounded bg-gray-700 text-white">
+                    <input type="text" id="expenseMode" placeholder="Payment Mode" class="w-1/4 px-4 py-2 rounded bg-gray-700 text-white">
+                    <input type="date" id="expenseDate" class="w-1/4 px-4 py-2 rounded bg-gray-700 text-white">
+                    <input type="number" id="expenseAmount" placeholder="Amount" class="w-1/4 px-4 py-2 rounded bg-gray-700 text-white">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Add</button>
+                </form>
             </div>
-        </div>
 
-        <!-- Recent Transactions -->
-        <div class="bg-gray-800 p-6 rounded-lg mt-6">
-            <h3 class="text-xl font-semibold text-gray-300">Recent Transactions</h3>
-            <div class="overflow-x-auto mt-4">
-                <table class="w-full border-collapse border border-gray-700">
-                    <thead class="bg-gray-900 text-gray-400">
-                        <tr>
-                            <th class="py-2 border border-gray-700">Name</th>
-                            <th class="py-2 border border-gray-700">Mode</th>
-                            <th class="py-2 border border-gray-700">Date</th>
-                            <th class="py-2 border border-gray-700">Amount</th>
+            <!-- Transactions Table -->
+            <div class="bg-gray-800 p-6 rounded-lg mt-6">
+                <h3 class="text-xl font-semibold">Recent Transactions</h3>
+                <table class="w-full mt-4 border border-gray-700">
+                    <thead>
+                        <tr class="text-left bg-gray-700">
+                            <th class="py-2 px-4">Name</th>
+                            <th class="py-2 px-4">Mode</th>
+                            <th class="py-2 px-4">Date</th>
+                            <th class="py-2 px-4">Amount</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr class="text-center">
-                            <td class="py-2 border border-gray-700">Figma (Subscription)</td>
-                            <td class="py-2 border border-gray-700">Credit Card</td>
-                            <td class="py-2 border border-gray-700">26-06-2022</td>
-                            <td class="py-2 border border-gray-700 text-red-500">-₹1800</td>
-                        </tr>
-                        <tr class="text-center">
-                            <td class="py-2 border border-gray-700">John Doe</td>
-                            <td class="py-2 border border-gray-700">Debit Card</td>
-                            <td class="py-2 border border-gray-700">20-06-2022</td>
-                            <td class="py-2 border border-gray-700 text-green-500">+₹15,000</td>
-                        </tr>
-                        <tr class="text-center">
-                            <td class="py-2 border border-gray-700">Dribbble (Subscription)</td>
-                            <td class="py-2 border border-gray-700">Credit Card</td>
-                            <td class="py-2 border border-gray-700">19-06-2022</td>
-                            <td class="py-2 border border-gray-700 text-red-500">-₹1600</td>
-                        </tr>
-                        <tr class="text-center">
-                            <td class="py-2 border border-gray-700">Bank Transfer</td>
-                            <td class="py-2 border border-gray-700">Bank</td>
-                            <td class="py-2 border border-gray-700">15-06-2022</td>
-                            <td class="py-2 border border-gray-700 text-red-500">-₹50,000</td>
-                        </tr>
+                    <tbody id="transactionsList">
+                        <!-- Transactions will be added dynamically -->
                     </tbody>
                 </table>
             </div>
-        </div>
+        </main>
+    </div>
 
-    </main>
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        // Chart.js Example
-        const ctx = document.getElementById('spendingChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Food', 'Bills', 'Entertainment', 'Savings'],
-                datasets: [{
-                    data: [5000, 10000, 3000, 20000],
-                    backgroundColor: ['#f87171', '#60a5fa', '#facc15', '#34d399'],
-                }]
-            }
-        });
-    </script>
-
+    <script src="../js/auth.js"></script>
+    <script src="../js/main.js"></script>
 </body>
 </html>
