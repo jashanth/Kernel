@@ -89,5 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadTransactions();
 });
 
+
+
 // Remove the window.onload as it would conflict with DOMContentLoaded
 // window.onload = loadTransactions;

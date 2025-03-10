@@ -7,10 +7,10 @@ const path = require('path');
 
 const app = express();
 
-// ✅ Serve Static Files from 'public' Folder
+// Serve Static Files from 'public' Folder
 app.use(express.static(path.join(__dirname, '../public')));
 
-// ✅ Allow CORS & Include Credentials for Sessions
+// Allow CORS & Include Credentials for Sessions
 app.use(cors({
     origin: 'http://localhost:5000',
     credentials: true
@@ -18,11 +18,11 @@ app.use(cors({
 
 app.use(express.json());
 
-// ✅ Configure Session Storage in Memory (Modified for better persistence)
+// Configure Session Storage
 app.use(session({
     secret: 'your_secret_key',
-    resave: true, // Changed to true for better session persistence
-    saveUninitialized: true, // Changed to true
+    resave: true,
+    saveUninitialized: true,
     cookie: {
         secure: false, // Set to `true` if using HTTPS
         httpOnly: true,
@@ -31,11 +31,11 @@ app.use(session({
     }
 }));
 
-// ✅ MySQL Connection
+// MySQL Connection
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: 'Nishanth@123', // ✅ Use your MySQL password
+    password: 'Nishanth@123', // Use your MySQL password
     database: 'pocket_money'
 });
 
@@ -47,38 +47,68 @@ db.connect(err => {
     }
 });
 
-// ✅ Redirect Root Route to Login Page
+// Redirect Root Route to Login Page
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/login.html'));
 });
 
-// ✅ User Signup
+// User Signup
 app.post('/api/signup', async (req, res) => {
-    const { username, password } = req.body;
+    const { username, password, balance = 0, income = 0 } = req.body;
 
     if (!username || !password) {
         return res.status(400).json({ message: "Username and password are required" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-    db.query(
-        "INSERT INTO users (username, password) VALUES (?, ?)",
-        [username, hashedPassword],
-        (err, result) => {
-            if (err) {
-                return res.status(400).json({ message: "Username already taken" });
+        db.query(
+            "INSERT INTO users (username, password) VALUES (?, ?)",
+            [username, hashedPassword],
+            (err, result) => {
+                if (err) {
+                    return res.status(400).json({ message: "Username already taken" });
+                }
+
+                const userId = result.insertId;
+
+                // Add financial data to user_finances table
+                db.query(
+                    "INSERT INTO user_finances (user_id, balance, income) VALUES (?, ?, ?)",
+                    [userId, balance, income],
+                    (err) => {
+                        if (err) {
+                            return res.status(500).json({ message: "Failed to initialize finances" });
+                        }
+
+                        // Set session
+                        req.session.user = { id: userId, username };
+                        req.session.save(err => {
+                            if (err) {
+                                return res.status(500).json({ message: "Session save failed" });
+                            }
+                            res.json({ 
+                                message: "Signup successful!", 
+                                user: { id: userId, username }, 
+                                balance, 
+                                income 
+                            });
+                        });
+                    }
+                );
             }
-            res.json({ message: "Signup successful! Please log in." });
-        }
-    );
+        );
+    } catch (err) {
+        res.status(500).json({ message: "Signup failed!", error: err });
+    }
 });
 
-// ✅ User Login (Improved Session Handling)
-app.post('/api/login', (req, res) => {
+// User Login
+app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
 
-    db.query("SELECT * FROM users WHERE username = ?", [username], async (err, results) => {
+    db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
         if (err || results.length === 0) {
             return res.status(401).json({ message: "Invalid username or password" });
         }
@@ -87,73 +117,93 @@ app.post('/api/login', (req, res) => {
         const passwordMatch = await bcrypt.compare(password, user.password);
 
         if (!passwordMatch) {
-            return res.status(401).json({ message: "Invalid credentials" });
+            return res.status(401).json({ message: "Invalid username or password" });
         }
 
-        // ✅ Store user in session
-        req.session.user = { id: user.id, username: user.username };
-        
-        // Wait for session to be saved before responding
-        req.session.save(err => {
+        // Fetch financial data
+        db.query('SELECT * FROM user_finances WHERE user_id = ?', [user.id], (err, financeResults) => {
             if (err) {
-                console.error("Session save error:", err);
-                return res.status(500).json({ message: "Login failed" });
+                return res.status(500).json({ message: "Database error" });
             }
-            console.log("Session saved successfully:", req.sessionID);
-            res.json({ message: "Login successful", user });
+
+            // Set session
+            req.session.user = { id: user.id, username: user.username };
+            req.session.save(err => {
+                if (err) {
+                    return res.status(500).json({ message: "Session save failed" });
+                }
+
+                const finances = financeResults.length > 0 ? financeResults[0] : { balance: 0, income: 0 };
+                res.json({ 
+                    success: true, 
+                    balance: finances.balance, 
+                    income: finances.income 
+                });
+            });
         });
     });
 });
 
-// ✅ Authentication Check Route (Improved Logging)
-app.get('/api/auth-check', (req, res) => {
-    console.log("Auth check request received, session:", req.sessionID);
-    console.log("Session user:", req.session.user);
-    
-    if (req.session.user) {
-        console.log("User is authenticated:", req.session.user.username);
-        res.json({ isAuthenticated: true, username: req.session.user.username });
-    } else {
-        console.log("User is not authenticated");
-        res.status(401).json({ isAuthenticated: false });
+// Get User Balance & Income
+app.get('/api/user-finances', (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ message: "Not authenticated" });
     }
+
+    db.query('SELECT balance, income FROM user_finances WHERE user_id = ?', [req.session.user.id], (err, results) => {
+        if (err) {
+            return res.status(500).json({ message: "Database error" });
+        }
+
+        const finances = results.length > 0 ? results[0] : { balance: 0, income: 0 };
+        res.json(finances);
+    });
 });
 
-// ✅ Logout (Now Clears Session Properly)
+// Update Balance & Income
+app.post('/api/update-finances', (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const { balance = 0, income = 0 } = req.body;
+    const userId = req.session.user.id;
+
+    // Add to existing balance and income
+    db.query(
+        'UPDATE user_finances SET balance = balance + ?, income = income + ? WHERE user_id = ?',
+        [balance, income, userId],
+        (err) => {
+            if (err) {
+                return res.status(500).json({ message: "Failed to update finances" });
+            }
+            res.json({ message: "Finances updated successfully" });
+        }
+    );
+});
+
+// Logout
 app.post('/api/logout', (req, res) => {
     req.session.destroy(err => {
         if (err) {
-            console.error("Error destroying session:", err);
             return res.status(500).json({ message: "Logout failed" });
         }
-        res.clearCookie('connect.sid'); // Clear the session cookie
+        res.clearCookie('connect.sid');
         res.json({ message: "Logged out successfully" });
     });
 });
 
-// ✅ Debug route to check session state
-app.get('/api/debug-session', (req, res) => {
-    console.log("Current session ID:", req.sessionID);
-    console.log("Session data:", req.session);
-    res.json({ 
-        sessionID: req.sessionID,
-        hasUser: !!req.session.user,
-        userData: req.session.user || null
-    });
-});
-
-// ✅ API route for transactions
+// Get Transactions
 app.get('/api/transactions', (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ message: "Not authenticated" });
     }
-    
+
     db.query(
         "SELECT * FROM transactions WHERE user_id = ? ORDER BY date DESC",
         [req.session.user.id],
         (err, results) => {
             if (err) {
-                console.error("Error fetching transactions:", err);
                 return res.status(500).json({ message: "Failed to fetch transactions" });
             }
             res.json(results);
@@ -161,35 +211,219 @@ app.get('/api/transactions', (req, res) => {
     );
 });
 
-// ✅ API route to add transaction
+// Add Transaction
 app.post('/api/transactions', (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ message: "Not authenticated" });
     }
-    
-    const { name, mode, date, amount } = req.body;
-    
-    if (!name || !mode || !date || isNaN(amount)) {
+
+    const { name, mode, date, amount, type } = req.body;
+
+    if (!name || !mode || !date || isNaN(amount) || !type) {
         return res.status(400).json({ message: "Invalid transaction data" });
     }
-    
+
+    const userId = req.session.user.id;
+
+    // Insert the transaction
     db.query(
-        "INSERT INTO transactions (user_id, name, mode, date, amount) VALUES (?, ?, ?, ?, ?)",
-        [req.session.user.id, name, mode, date, amount],
+        "INSERT INTO transactions (user_id, name, mode, date, amount, type) VALUES (?, ?, ?, ?, ?, ?)",
+        [userId, name, mode, date, amount, type],
         (err, result) => {
             if (err) {
-                console.error("Error adding transaction:", err);
                 return res.status(500).json({ message: "Failed to add transaction" });
             }
-            
-            res.json({ 
-                id: result.insertId,
-                message: "Transaction added successfully" 
-            });
+
+            // Update user balance based on transaction type
+            const balanceUpdate = type === 'credit' ? amount : -amount;
+            db.query(
+                'UPDATE user_finances SET balance = balance + ? WHERE user_id = ?',
+                [balanceUpdate, userId],
+                (err) => {
+                    if (err) {
+                        return res.status(500).json({ message: "Failed to update balance" });
+                    }
+
+                    res.json({ 
+                        id: result.insertId, 
+                        message: "Transaction added successfully" 
+                    });
+                }
+            );
         }
     );
 });
 
-// ✅ Start Server
+// ✅ Fetch Savings Data
+app.get('/api/savings', (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    db.query(
+        'SELECT savings FROM user_finances WHERE user_id = ?',
+        [req.session.user.id],
+        (err, results) => {
+            if (err) {
+                return res.status(500).json({ message: "Failed to fetch savings" });
+            }
+            res.json({ savings: results[0]?.savings || 0 });
+        }
+    );
+});
+
+// ✅ Add to Savings (Transfer from Balance to Savings)
+app.post('/api/savings/add', (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const { amount } = req.body;
+    if (isNaN(amount) || amount <= 0) {
+        return res.status(400).json({ message: "Invalid amount" });
+    }
+
+    const userId = req.session.user.id;
+
+    // Start a transaction
+    db.beginTransaction(err => {
+        if (err) {
+            return res.status(500).json({ message: "Transaction failed" });
+        }
+
+        // Check if the user has enough balance
+        db.query(
+            'SELECT balance FROM user_finances WHERE user_id = ? FOR UPDATE',
+            [userId],
+            (err, results) => {
+                if (err) {
+                    return db.rollback(() => res.status(500).json({ message: "Database error" }));
+                }
+
+                const currentBalance = results[0]?.balance || 0;
+                if (currentBalance < amount) {
+                    return db.rollback(() => res.status(400).json({ message: "Insufficient balance" }));
+                }
+
+                // Deduct from balance and add to savings
+                db.query(
+                    'UPDATE user_finances SET balance = balance - ?, savings = savings + ? WHERE user_id = ?',
+                    [amount, amount, userId],
+                    (err) => {
+                        if (err) {
+                            return db.rollback(() => res.status(500).json({ message: "Failed to update finances" }));
+                        }
+
+                        // Record the savings transaction
+                        db.query(
+                            'INSERT INTO savings_history (user_id, type, amount) VALUES (?, "add", ?)',
+                            [userId, amount],
+                            (err) => {
+                                if (err) {
+                                    return db.rollback(() => res.status(500).json({ message: "Failed to record transaction" }));
+                                }
+
+                                // Commit the transaction
+                                db.commit(err => {
+                                    if (err) {
+                                        return db.rollback(() => res.status(500).json({ message: "Commit failed" }));
+                                    }
+                                    res.json({ message: "Added to savings successfully" });
+                                });
+                            }
+                        );
+                    }
+                );
+            }
+        );
+    });
+});
+
+// ✅ Remove from Savings (Transfer from Savings to Balance)
+app.post('/api/savings/remove', (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    const { amount } = req.body;
+    if (isNaN(amount) || amount <= 0) {
+        return res.status(400).json({ message: "Invalid amount" });
+    }
+
+    const userId = req.session.user.id;
+
+    // Start a transaction
+    db.beginTransaction(err => {
+        if (err) {
+            return res.status(500).json({ message: "Transaction failed" });
+        }
+
+        // Check if the user has enough savings
+        db.query(
+            'SELECT savings FROM user_finances WHERE user_id = ? FOR UPDATE',
+            [userId],
+            (err, results) => {
+                if (err) {
+                    return db.rollback(() => res.status(500).json({ message: "Database error" }));
+                }
+
+                const currentSavings = results[0]?.savings || 0;
+                if (currentSavings < amount) {
+                    return db.rollback(() => res.status(400).json({ message: "Insufficient savings" }));
+                }
+
+                // Deduct from savings and add to balance
+                db.query(
+                    'UPDATE user_finances SET savings = savings - ?, balance = balance + ? WHERE user_id = ?',
+                    [amount, amount, userId],
+                    (err) => {
+                        if (err) {
+                            return db.rollback(() => res.status(500).json({ message: "Failed to update finances" }));
+                        }
+
+                        // Record the savings transaction
+                        db.query(
+                            'INSERT INTO savings_history (user_id, type, amount) VALUES (?, "remove", ?)',
+                            [userId, amount],
+                            (err) => {
+                                if (err) {
+                                    return db.rollback(() => res.status(500).json({ message: "Failed to record transaction" }));
+                                }
+
+                                // Commit the transaction
+                                db.commit(err => {
+                                    if (err) {
+                                        return db.rollback(() => res.status(500).json({ message: "Commit failed" }));
+                                    }
+                                    res.json({ message: "Removed from savings successfully" });
+                                });
+                            }
+                        );
+                    }
+                );
+            }
+        );
+    });
+});
+
+// ✅ Fetch Savings History
+app.get('/api/savings/history', (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    db.query(
+        'SELECT * FROM savings_history WHERE user_id = ? ORDER BY date DESC',
+        [req.session.user.id],
+        (err, results) => {
+            if (err) {
+                return res.status(500).json({ message: "Failed to fetch savings history" });
+            }
+            res.json(results);
+        }
+    );
+});
+
+// Start Server
 const PORT = 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
