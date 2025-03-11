@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Cards - MoneyGuard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/main.js"></script> <!-- Include main.js for shared functionality -->
+</head>
+<body class="bg-gray-900 text-white">
+
+    <!-- Sidebar -->
+    <div class="flex h-screen">
+        <aside class="bg-black w-64 p-6">
+            <h2 class="text-2xl font-bold text-blue-400">💰 MoneyGuard</h2>
+            <p class="mt-2 text-gray-400">Welcome back! <strong id="username">User</strong></p>
+            
+            <nav class="mt-6 space-y-2">
+                <a href="index.html" class="block py-2 px-4 hover:bg-gray-700">📊 Dashboard</a>
+                <a href="transactions.html" class="block py-2 px-4 hover:bg-gray-700">📜 Transactions</a>
+                <a href="my-cards.html" class="block py-2 px-4 bg-blue-600 rounded">💳 My Cards</a> <!-- Active Link -->
+                <a href="ai.html" class="block py-2 px-4 hover:bg-gray-700">💼 AI Chat</a>
+            </nav>
+
+            <button id="logoutBtn" class="mt-6 w-full bg-red-600 py-2 rounded">🚪 Logout</button>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6">
+            <h1 class="text-3xl font-bold">My Cards</h1>
+
+            <!-- Add New Card Form -->
+            <div class="bg-gray-800 p-6 rounded-lg mt-6">
+                <h3 class="text-xl font-semibold">💳 Add New Card</h3>
+                <form id="addCardForm" class="mt-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="text" id="cardName" placeholder="Cardholder Name" class="w-full px-4 py-2 rounded bg-gray-700 text-white" required>
+                        <input type="text" id="cardNumber" placeholder="Card Number" class="w-full px-4 py-2 rounded bg-gray-700 text-white" required>
+                        <input type="text" id="cardExpiry" placeholder="Expiry Date (MM/YY)" class="w-full px-4 py-2 rounded bg-gray-700 text-white" required>
+                        <input type="text" id="cardCVV" placeholder="CVV" class="w-full px-4 py-2 rounded bg-gray-700 text-white" required>
+                        <select id="cardType" class="w-full px-4 py-2 rounded bg-gray-700 text-white" required>
+                            <option value="" disabled selected>Select Card Type</option>
+                            <option value="visa">Visa</option>
+                            <option value="mastercard">Mastercard</option>
+                            <option value="amex">American Express</option>
+                            <option value="discover">Discover</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Add Card</button>
+                </form>
+            </div>
+
+            <!-- Display Cards -->
+            <div id="cardsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+                <!-- Cards will be dynamically added here -->
+            </div>
+        </main>
+    </div>
+    
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ask AI - MoneyGuard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .chat-history {
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            scrollbar-width: thin;
+            margin-bottom: 1rem; /* Added spacing between chat history and input area */
+        }
+        
+        .chat-history::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .chat-history::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        
+        .chat-history::-webkit-scrollbar-thumb {
+            background-color: #272aca81;
+            border-radius: 20px;
+        }
+        
+        .message {
+            padding: 1rem;
+            border-radius: 0.75rem;
+            max-width: 80%;
+            animation: fadeIn 0.3s ease-out forwards;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            width: fit-content;
+        }
+        
+        .user-message {
+            align-self: flex-end;
+            background-color: #272aca81;
+            border-bottom-right-radius: 0;
+        }
+        
+        .ai-message {
+            align-self: flex-start;
+            background-color: #111827;
+            border-bottom-left-radius: 0;
+            max-width: 75%;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .typing-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            background-color: #60a5fa;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        
+        .typing-dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0s;
+        }
+        
+        @keyframes bounce {
+            0%, 80%, 100% { 
+                transform: scale(0);
+            } 
+            40% { 
+                transform: scale(1.0);
+            }
+        }
+        
+        /* Added styles for the chat container */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 220px); /* Adjust height to fit screen */
+        }
+        
+        /* Style for the input area to stick to bottom */
+        .input-area {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid #374151;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+    <!-- Sidebar and Main Content Container -->
+    <div class="flex h-screen">
+        <!-- Sidebar - Same as in other pages -->
+        <aside class="bg-black w-64 p-6">
+            <h2 class="text-2xl font-bold text-blue-400">💰 MoneyGuard</h2>
+            <p class="mt-2 text-gray-400">Welcome back! <strong id="username">User</strong></p>
+            
+            <nav class="mt-6 space-y-2">
+                <a href="index.html" class="block py-2 px-4 hover:bg-gray-700">📊 Dashboard</a>
+                <a href="transactions.html" class="block py-2 px-4 hover:bg-gray-700">📜 Transactions</a>
+                <a href="#" class="block py-2 px-4 bg-blue-600 rounded">💼 ASK AI</a>
+                <a href="my-cards.html" class="block py-2 px-4 hover:bg-gray-700">💳 My Cards</a>
+            </nav>
+
+            <button id="logoutBtn" class="mt-6 w-full bg-red-600 py-2 rounded">🚪 Logout</button>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6 overflow-hidden flex flex-col">
+            <h1 class="text-3xl font-bold text-center">Ask AI</h1>
+            <p class="text-gray-400 mt-2 mb-6 text-center">Get intelligent answers to all your questions</p>
+            
+            <!-- Chat Container - Restructured for better positioning -->
+            <div class="bg-gray-800 p-6 rounded-lg flex-1 chat-container">
+                <div id="chatHistory" class="chat-history p-4 flex-1">
+                    <!-- Messages will appear here -->
+                </div>
+                
+                <div class="input-area">
+                    <div class="flex gap-2">
+                        <input 
+                            type="text" 
+                            id="userQuestion" 
+                            placeholder="Type your question here..." 
+                            class="flex-1 px-4 py-2 rounded bg-gray-700 text-white"
+                            autofocus
+                        />
+                        <button id="askButton" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2">
+                            <i class="fas fa-paper-plane"></i>
+                            <span>Ask</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const chatHistory = document.getElementById("chatHistory");
+        const userQuestion = document.getElementById("userQuestion");
+        const askButton = document.getElementById("askButton");
+        let username = "User";
+        
+        // Predefined responses for common inputs
+        const predefinedResponses = {
+            "hi": () => `Hello, ${username}! How can I help you with your finances today?`,
+            "hello": () => `Hi there, ${username}! What can I assist you with regarding your money management?`,
+            "hey": () => `Hey ${username}! What financial questions do you have?`,
+            "how are you": () => `I'm doing well, thanks for asking! How can I help with your financial planning today, ${username}?`,
+            "help": "I can answer questions on various financial topics. Just ask about your transactions, savings, or budgeting advice!",
+            "thanks": "You're welcome! Feel free to ask if you need anything else about your finances.",
+            "thank you": "You're welcome! Is there anything else you'd like to know about managing your money?",
+            "bye": () => `Goodbye, ${username}! Have a financially healthy day!`,
+            "what can you do": "I can help analyze your spending patterns, offer budgeting advice, explain financial terms, answer questions about your transactions and savings, and even tell you the current time!",
+            "who are you": "I'm your AI financial assistant, designed to help you manage your money more effectively.",
+            "how to save money": "To save money, track your expenses, create a budget, reduce unnecessary spending, and consider setting up automatic transfers to a savings account. Would you like more specific advice based on your spending habits?",
+            "what is a good budget": "A good budget follows the 50/30/20 rule: 50% for needs, 30% for wants, and 20% for savings and debt repayment. Based on your transaction history, would you like me to suggest a personalized budget?",
+            "how much should i save": "A general guideline is to save at least 20% of your income. Looking at your current income and expenses, I can provide more personalized savings recommendations if you'd like.",
+            "investment advice": "For investment advice, consider your goals, risk tolerance, and time horizon. Options include stocks, bonds, mutual funds, ETFs, and retirement accounts. Would you like more specific information on any of these?",
+            "what are my spending habits": "Based on your transaction history, I can analyze your spending patterns across categories like food, travel, essentials, and investments. Would you like me to prepare a detailed spending report?",
+            "what time is it": () => {
+                const now = new Date();
+                return `The current time is ${now.toLocaleTimeString()}.`;
+            },
+            "time": () => {
+                const now = new Date();
+                return `The current time is ${now.toLocaleTimeString()}.`;
+            },
+            "what is the time": () => {
+                const now = new Date();
+                return `The current time is ${now.toLocaleTimeString()}.`;
+            },
+            "date": () => {
+                const now = new Date();
+                return `Today's date is ${now.toLocaleDateString()}.`;
+            },
+            "what is the date": () => {
+                const now = new Date();
+                return `Today's date is ${now.toLocaleDateString()}.`;
+            },
+            "what day is it": () => {
+                const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+                const now = new Date();
+                return `Today is ${days[now.getDay()]}.`;
+            },
+            // Budgeting advice
+            "budgeting advice": "Based on your transaction history, I recommend following the 50/30/20 rule: 50% for essentials (housing, food, utilities), 30% for wants (entertainment, dining out), and 20% for savings and debt. I notice you're currently spending more on dining out - cutting back there could help you meet your savings goals.",
+            "how to budget": "To create an effective budget: 1) Track all income and expenses for a month, 2) Categorize your spending, 3) Set realistic limits for each category, 4) Use the 50/30/20 rule as a guideline, and 5) Review and adjust monthly. Would you like help setting up a specific budget based on your spending patterns?",
+            "budget help": "Looking at your recent transactions, I recommend reducing your subscription services by $45/month and setting up automatic transfers of $200 monthly to your savings account. This simple adjustment could help you save an additional $2,940 annually.",
+            "create a budget": "To create a personalized budget, I'll need to analyze your income and spending patterns. Based on your transaction history, I'd suggest allocating $1,200 for housing, $400 for groceries, $300 for transportation, $200 for utilities, $400 for discretionary spending, and $500 for savings each month. Would you like to adjust any of these categories?",
+            
+            // Savings recommendations
+            "savings recommendations": "Based on your current spending patterns, here are three ways to increase your savings: 1) Reduce food delivery services to save ~$120/month, 2) Consolidate your subscription services to save ~$35/month, and 3) Set up automatic transfers of $200 to your savings account on payday.",
+            "how to save more": "To increase your savings, I recommend: 1) Set up automatic transfers to your savings account on payday, 2) Try the 30-day rule for non-essential purchases, 3) Reduce your dining out budget by 20%, and 4) Consider switching to more affordable alternatives for your streaming services.",
+            "savings goals": "For successful savings goals: 1) Make them specific and measurable, 2) Set realistic timelines, 3) Prioritize emergency funds (3-6 months of expenses), 4) Then save for short-term goals like vacations, and 5) Finally, invest for long-term goals like retirement. Based on your income, I recommend saving $450/month to reach your emergency fund goal in 10 months.",
+            "emergency fund": "An emergency fund should cover 3-6 months of essential expenses. Based on your spending patterns, I recommend a target of $9,000. At your current saving rate of $300/month, you'll reach this goal in approximately 30 months. Increasing to $450/month would reduce this to 20 months.",
+            
+            // Financial term explanations
+            "what is apr": "APR (Annual Percentage Rate) is the yearly interest rate charged on borrowed money. It includes the interest rate plus other costs like fees and insurance. For example, if your credit card has a 18.99% APR, that's how much interest you'll pay annually if you carry a balance.",
+            "explain interest rates": "Interest rates represent the cost of borrowing money, expressed as a percentage. For loans, it's what you pay to the lender. For savings accounts, it's what the bank pays you. Your current savings account has a 0.5% interest rate, meaning you earn $5 annually per $1,000 saved. I can recommend higher-yield alternatives if you're interested.",
+            "what is compound interest": "Compound interest is when you earn interest on both your initial deposit and on interest you've already earned. For example, if you invest $1,000 with a 5% annual compound interest rate, after 10 years you'll have about $1,629 - that's $629 in interest! It's essentially 'interest on interest' and is a powerful way to grow your savings over time.",
+            "what is a credit score": "A credit score is a number (typically 300-850) that represents your creditworthiness. Higher scores can help you qualify for better loans and interest rates. It's calculated based on payment history (35%), amounts owed (30%), length of credit history (15%), new credit (10%), and credit mix (10%). I can offer tips to improve your score if you'd like.",
+            "what is a 401k": "A 401(k) is an employer-sponsored retirement account that allows you to contribute pre-tax income, reducing your taxable income while saving for retirement. Many employers match contributions up to a certain percentage - this is essentially free money. Based on your current contributions, you're on track to reach approximately $1.2M by retirement age. Consider increasing your contribution to maximize your employer's 3% match.",
+            "what is inflation": "Inflation is the rate at which prices for goods and services rise over time, reducing purchasing power. For example, with 3% annual inflation, $100 today would buy only $97 worth of goods next year. This is why it's important that your long-term investments earn returns higher than the inflation rate.",
+            "what is diversification": "Diversification means spreading your investments across different asset types to reduce risk. Think of it as 'not putting all your eggs in one basket.' A diversified portfolio might include stocks, bonds, real estate, and cash equivalents. This strategy can help protect your investments from market volatility while still pursuing growth.",
+            
+            // Combined queries
+            "budget and savings": "Looking at your transactions, I see you could potentially save an additional $250/month by: 1) Reducing dining out by $100, 2) Consolidating subscription services to save $50, and 3) Reducing impulse purchases by $100. I'd recommend automatically transferring this $250 to a high-yield savings account to earn 10-15x the interest of your current checking account.",
+            "financial advice": "Based on your spending patterns, here are my top 3 recommendations: 1) Increase your emergency fund contributions to $400/month to reach your 3-month expense goal faster, 2) Reduce your dining out expenses by 15% to free up money for savings, and 3) Consider refinancing your loan to take advantage of lower interest rates, potentially saving you $150/month."
+        };
+        
+        // Function to add user message to chat
+        function addUserMessage(text) {
+            const messageElement = document.createElement("div");
+            messageElement.className = "message user-message";
+            messageElement.textContent = text;
+            chatHistory.appendChild(messageElement);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+        
+        // Function to add AI message to chat
+        function addAIMessage(text) {
+            const messageElement = document.createElement("div");
+            messageElement.className = "message ai-message";
+            messageElement.textContent = text;
+            chatHistory.appendChild(messageElement);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+        
+        // Function to show typing indicator
+        function showTypingIndicator() {
+            const loadingElement = document.createElement("div");
+            loadingElement.id = "typingIndicator";
+            loadingElement.className = "message ai-message";
+            
+            const typingIndicator = document.createElement("div");
+            typingIndicator.className = "typing-indicator";
+            
+            for (let i = 0; i < 3; i++) {
+                const dot = document.createElement("div");
+                dot.className = "typing-dot";
+                typingIndicator.appendChild(dot);
+            }
+            
+            loadingElement.appendChild(typingIndicator);
+            chatHistory.appendChild(loadingElement);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+            
+            return loadingElement;
+        }
+        
+        // Handle Enter key press
+        userQuestion.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                askQuestion();
+            }
+        });
+        
+        askButton.addEventListener("click", askQuestion);
+        
+        function askQuestion() {
+            const question = userQuestion.value.trim();
+            if (!question) return;
+
+            // Add user message to chat
+            addUserMessage(question);
+            userQuestion.value = "";
+
+            // Show typing indicator
+            const typingIndicator = showTypingIndicator();
+
+            // Generate a random delay between 0.8 to 2 seconds
+            const randomDelay = Math.floor(Math.random() * 3200) + 1500;
+
+            setTimeout(() => {
+                // Remove typing indicator
+                chatHistory.removeChild(typingIndicator);
+
+                // Check if the question has a predefined response
+                const lowercaseQuestion = question.toLowerCase();
+                let aiResponse = "I'm sorry, I don't have enough information to answer that question yet. As your financial assistant, I can help with budgeting, savings, and analyzing transactions once you've used the app more.";
+                
+                // Check for exact matches
+                if (predefinedResponses[lowercaseQuestion]) {
+                    const response = predefinedResponses[lowercaseQuestion];
+                    aiResponse = typeof response === 'function' ? response() : response;
+                } else {
+                    // Check for partial matches or special commands
+                    if (lowercaseQuestion.includes("time")) {
+                        const now = new Date();
+                        aiResponse = `The current time is ${now.toLocaleTimeString()}.`;
+                    } else if (lowercaseQuestion.includes("date") || lowercaseQuestion.includes("day")) {
+                        const now = new Date();
+                        aiResponse = `Today's date is ${now.toLocaleDateString()}.`;
+                    } else {
+                        // Check for other partial matches
+                        for (const key in predefinedResponses) {
+                            if (key && lowercaseQuestion.includes(key)) {
+                                const response = predefinedResponses[key];
+                                aiResponse = typeof response === 'function' ? response() : response;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Add AI's response to chat
+                addAIMessage(aiResponse);
+            }, randomDelay);
+        }
+        
+        // Load username from localStorage if available (for consistency with other pages)
+        document.addEventListener('DOMContentLoaded', function() {
+            const storedUsername = localStorage.getItem('username');
+            if (storedUsername) {
+                username = storedUsername;
+                document.getElementById('username').textContent = username;
+            }
+            
+            // Add initial welcome message with personalized greeting
+            setTimeout(() => {
+                const timeNow = new Date().getHours();
+                let greeting = "Hello";
+                
+                if (timeNow < 12) {
+                    greeting = "Good morning";
+                } else if (timeNow < 18) {
+                    greeting = "Good afternoon";
+                } else {
+                    greeting = "Good evening";
+                }
+                
+                addAIMessage(`${greeting}, ${username}! I'm your AI financial assistant. How can I help you manage your money today?`);
+            }, 500);
+        });
+        
+        // Handle logout if needed (for consistency with other pages)
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', function() {
+                localStorage.removeItem('username');
+                localStorage.removeItem('isLoggedIn');
+                window.location.href = 'login.html';
+            });
+        }
+    </script>
+    
+    <script src="js/auth.js"></script>
+</body>
+</html>

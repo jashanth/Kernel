@@ -50,16 +50,18 @@ document.getElementById("signupForm")?.addEventListener("submit", async function
 
     const username = document.getElementById("signupUsername").value;
     const password = document.getElementById("signupPassword").value;
+    const balance = parseFloat(document.getElementById("signupBalance").value);
+    const income = parseFloat(document.getElementById("signupIncome").value);
 
-    if (!username || !password) {
-        alert("Please enter both username and password.");
+    if (!username || !password || isNaN(balance) || isNaN(income)) {
+        alert("Please fill in all fields correctly.");
         return;
     }
 
     const response = await fetch("/api/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username, password, balance, income })
     });
 
     const data = await response.json();
@@ -79,25 +81,38 @@ document.getElementById("loginForm")?.addEventListener("submit", async function 
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
 
-    const response = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-        credentials: "include"
-    });
+    try {
+        const response = await fetch("/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password }),
+            credentials: "include"
+        });
 
-    const data = await response.json();
+        const data = await response.json();
 
-    if (response.ok) {
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("username", username);
-        localStorage.setItem("user", username); // Added this for compatibility
-        window.location.href = "index.html"; // ✅ Redirect to main page after login
-    } else {
-        alert(data.message || "Invalid credentials! Please try again.");
+        if (response.ok) {
+            localStorage.setItem("isAuthenticated", "true");
+            localStorage.setItem("username", username);
+            localStorage.setItem("user", username); // Added this for compatibility
+            
+            // Store financial data
+            if (data.balance !== undefined) {
+                localStorage.setItem("totalBalance", data.balance);
+            }
+            if (data.income !== undefined) {
+                localStorage.setItem("totalIncome", data.income);
+            }
+            
+            window.location.href = "index.html"; // ✅ Redirect to main page after login
+        } else {
+            alert(data.message || "Invalid credentials! Please try again.");
+        }
+    } catch (error) {
+        console.error("Login error:", error);
+        alert("An error occurred during login. Please try again.");
     }
 });
-
 // ✅ Handle Logout
 document.getElementById("logoutBtn")?.addEventListener("click", async function () {
     await fetch("/api/logout", { method: "POST", credentials: "include" });

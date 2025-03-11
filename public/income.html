@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Enter Income</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            width: 400px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Enter Your Total Income</h2>
+        <input type="number" id="totalIncome" placeholder="Enter income">
+        <button onclick="saveIncome()">Go to Dashboard</button>
+    </div>
+
+    <script>
+        function saveIncome() {
+            let income = document.getElementById("totalIncome").value;
+            if (income === "") {
+                alert("Please enter an income amount!");
+                return;
+            }
+            localStorage.setItem("totalIncome", income);
+            console.log("Income saved to localStorage:", income); // Debugging
+            window.location.href = "index.html";
+        }
+    </script>
+
+</body>
+</html>

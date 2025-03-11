@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Enter Balance</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            width: 400px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Enter Your Total Balance</h2>
+        <input type="number" id="totalBalance" placeholder="Enter balance">
+        <button onclick="saveBalance()">Next</button>
+    </div>
+
+    <script>
+        function saveBalance() {
+            let balance = document.getElementById("totalBalance").value;
+            if (balance === "") {
+                alert("Please enter a balance amount!");
+                return;
+            }
+            localStorage.setItem("totalBalance", balance);
+            console.log("Balance saved to localStorage:", balance); // Debugging
+            window.location.href = "income.html";
+        }
+    </script>
+
+</body>
+</html>
