@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MoneyGuard Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Include Chart.js -->
 </head>
 <body class="bg-gray-900 text-white">
 
@@ -13,14 +14,20 @@
         <aside class="bg-black w-64 p-6">
             <h2 class="text-2xl font-bold text-blue-400">💰 MoneyGuard</h2>
             <p class="mt-2 text-gray-400">Welcome back! <strong id="username">User</strong></p>
-            
             <nav class="mt-6 space-y-2">
+<<<<<<< HEAD
                 <a href="#" class="block py-2 px-4 bg-blue-600 rounded">📊 Dashboard</a>
                 <a href="#" class="block py-2 px-4 hover:bg-gray-700">💼 Investments</a>
                 <a href="#" class="block py-2 px-4 hover:bg-gray-700">💳 My Cards</a>
                 <a href="#" class="block py-2 px-4 hover:bg-gray-700">📜 Transactions</a>
                 <a href="ai.html" class="block py-2 px-4 hover:bg-gray-700">🗪 Ask AI</a>
 
+=======
+                <a href="index.html" class="block py-2 px-4 bg-blue-600 rounded">📊 Dashboard</a>
+                <a href="transactions.html" class="block py-2 px-4 hover:bg-gray-700">📜 Transactions</a>
+                <a href="ai.html" class="block py-2 px-4 hover:bg-gray-700">💼 ASK AI</a>
+                <a href="my-cards.html" class="block py-2 px-4 hover:bg-gray-700">💳 My Cards</a>
+>>>>>>> e486554 (We integrated AI and worked on backend. Imporved the UI for better stability)
             </nav>
 
             <button id="logoutBtn" class="mt-6 w-full bg-red-600 py-2 rounded">🚪 Logout</button>
@@ -68,6 +75,15 @@
                     <input type="text" id="expenseMode" placeholder="Payment Mode" class="w-1/4 px-4 py-2 rounded bg-gray-700 text-white">
                     <input type="date" id="expenseDate" class="w-1/4 px-4 py-2 rounded bg-gray-700 text-white">
                     <input type="number" id="expenseAmount" placeholder="Amount" class="w-1/4 px-4 py-2 rounded bg-gray-700 text-white">
+<<<<<<< HEAD
+=======
+                    <select id="expenseCategory" class="w-1/4 px-4 py-2 rounded bg-gray-700 text-white">
+                        <option value="travelling">Travelling</option>
+                        <option value="food">Food</option>
+                        <option value="essentials">Essentials</option>
+                        <option value="investment">Investment</option>
+                    </select>
+>>>>>>> e486554 (We integrated AI and worked on backend. Imporved the UI for better stability)
                     <select id="expenseType" class="w-1/4 px-4 py-2 rounded bg-gray-700 text-white">
                         <option value="debit">Debit</option>
                         <option value="credit">Credit</option>
@@ -77,6 +93,7 @@
             </div>
 
             <!-- Savings Section -->
+<<<<<<< HEAD
             <div class="bg-gray-800 p-6 rounded-lg mt-6">
                 <h3 class="text-xl font-semibold">💰 Savings</h3>
                 <div class="mt-4">
@@ -90,21 +107,44 @@
             </div>
 
             <!-- Transactions Table -->
+=======
+>>>>>>> e486554 (We integrated AI and worked on backend. Imporved the UI for better stability)
             <div class="bg-gray-800 p-6 rounded-lg mt-6">
-                <h3 class="text-xl font-semibold">Recent Transactions</h3>
-                <table class="w-full mt-4 border border-gray-700">
-                    <thead>
-                        <tr class="text-left bg-gray-700">
-                            <th class="py-2 px-4">Name</th>
-                            <th class="py-2 px-4">Mode</th>
-                            <th class="py-2 px-4">Date</th>
-                            <th class="py-2 px-4">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody id="transactionsList">
-                        <!-- Transactions will be added dynamically -->
-                    </tbody>
-                </table>
+                <h3 class="text-xl font-semibold">💰 Savings</h3>
+                <div class="mt-4">
+                    <p class="text-gray-400">Current Savings: <span id="savingsDisplay" class="text-2xl font-bold">₹0.00</span></p>
+                    <div class="flex gap-2 mt-4">
+                        <input type="number" id="savingsAmount" placeholder="Amount" class="w-1/2 px-4 py-2 rounded bg-gray-700 text-white">
+                        <input type="date" id="savingsDate" class="w-1/2 px-4 py-2 rounded bg-gray-700 text-white">
+                    </div>
+                    <div class="flex gap-2 mt-4">
+                        <button onclick="addToSavings()" class="w-1/2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">Add</button>
+                        <button onclick="removeFromSavings()" class="w-1/2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">Remove</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pie Chart Section -->
+            <div class="bg-gray-800 p-6 rounded-lg mt-6">
+                <h3 class="text-xl font-semibold">📊 Expense Categories</h3>
+                <div class="mt-4" style="height: 300px; position: relative;">
+                    <canvas id="expensePieChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Savings Graph Section -->
+            <div class="bg-gray-800 p-6 rounded-lg mt-6">
+                <h3 class="text-xl font-semibold">📈 Savings Over Time</h3>
+                <div class="mt-4">
+                    <form id="savingsGraphForm" class="flex gap-2">
+                        <input type="date" id="startDate" class="w-1/3 px-4 py-2 rounded bg-gray-700 text-white" required>
+                        <input type="date" id="endDate" class="w-1/3 px-4 py-2 rounded bg-gray-700 text-white" required>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Update Graph</button>
+                    </form>
+                </div>
+                <div class="mt-4" style="height: 300px; position: relative;">
+                    <canvas id="savingsLineChart"></canvas>
+                </div>
             </div>
 
             <!-- Savings History -->
@@ -128,5 +168,9 @@
 
     <script src="js/auth.js"></script>
     <script src="js/main.js"></script>
+<<<<<<< HEAD
+=======
+    
+>>>>>>> e486554 (We integrated AI and worked on backend. Imporved the UI for better stability)
 </body>
 </html>

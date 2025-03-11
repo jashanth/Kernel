@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transactions - MoneyGuard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white">
+
+    <!-- Sidebar -->
+    <div class="flex h-screen">
+        <aside class="bg-black w-64 p-6">
+            <h2 class="text-2xl font-bold text-blue-400">💰 MoneyGuard</h2>
+            <p class="mt-2 text-gray-400">Welcome back! <strong id="username">User</strong></p>
+            
+            <nav class="mt-6 space-y-2">
+                <a href="index.html" class="block py-2 px-4 bg-blue-600 rounded">📊 Dashboard</a>
+                <a href="transactions.html" class="block py-2 px-4 hover:bg-gray-700">📜 Transactions</a>
+                <a href="ai.html" class="block py-2 px-4 hover:bg-gray-700">💼 ASK AI</a>
+                <a href="my-cards.html" class="block py-2 px-4 hover:bg-gray-700">💳 My Cards</a>
+            </nav>
+
+            <button id="logoutBtn" class="mt-6 w-full bg-red-600 py-2 rounded">🚪 Logout</button>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-6">
+            <h1 class="text-3xl font-bold">Transactions</h1>
+
+            <!-- Recent Transactions -->
+            <div class="bg-gray-800 p-6 rounded-lg mt-6">
+                <h3 class="text-xl font-semibold">Recent Transactions</h3>
+                <table class="w-full mt-4 border border-gray-700">
+                    <thead>
+                        <tr class="text-left bg-gray-700">
+                            <th class="py-2 px-4">Name</th>
+                            <th class="py-2 px-4">Mode</th>
+                            <th class="py-2 px-4">Date</th>
+                            <th class="py-2 px-4">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsList">
+                        <!-- Transactions will be added dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Savings History -->
+            <div class="bg-gray-800 p-6 rounded-lg mt-6">
+                <h3 class="text-xl font-semibold">📜 Savings History</h3>
+                <table class="w-full mt-4 border border-gray-700">
+                    <thead>
+                        <tr class="text-left bg-gray-700">
+                            <th class="py-2 px-4">Type</th>
+                            <th class="py-2 px-4">Amount</th>
+                            <th class="py-2 px-4">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="savingsHistory">
+                        <!-- Savings history will be added dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
