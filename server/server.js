@@ -75,11 +75,7 @@ app.post('/api/signup', async (req, res) => {
 
                 // Add financial data to user_finances table
                 db.query(
-<<<<<<< HEAD
-                    "INSERT INTO user_finances (user_id, balance, income) VALUES (?, ?, ?)",
-=======
                     "INSERT INTO user_finances (user_id, balance, income, savings) VALUES (?, ?, ?, 0)",
->>>>>>> e486554 (We integrated AI and worked on backend. Imporved the UI for better stability)
                     [userId, balance, income],
                     (err) => {
                         if (err) {
@@ -137,20 +133,12 @@ app.post('/api/login', async (req, res) => {
                     return res.status(500).json({ message: "Session save failed" });
                 }
 
-<<<<<<< HEAD
-                const finances = financeResults.length > 0 ? financeResults[0] : { balance: 0, income: 0 };
-                res.json({ 
-                    success: true, 
-                    balance: finances.balance, 
-                    income: finances.income 
-=======
                 const finances = financeResults.length > 0 ? financeResults[0] : { balance: 0, income: 0, savings: 0 };
                 res.json({ 
                     success: true, 
                     balance: finances.balance, 
                     income: finances.income,
                     savings: finances.savings
->>>>>>> e486554 (We integrated AI and worked on backend. Imporved the UI for better stability)
                 });
             });
         });
@@ -163,20 +151,12 @@ app.get('/api/user-finances', (req, res) => {
         return res.status(401).json({ message: "Not authenticated" });
     }
 
-<<<<<<< HEAD
-    db.query('SELECT balance, income FROM user_finances WHERE user_id = ?', [req.session.user.id], (err, results) => {
-=======
     db.query('SELECT balance, income, savings FROM user_finances WHERE user_id = ?', [req.session.user.id], (err, results) => {
->>>>>>> e486554 (We integrated AI and worked on backend. Imporved the UI for better stability)
         if (err) {
             return res.status(500).json({ message: "Database error" });
         }
 
-<<<<<<< HEAD
-        const finances = results.length > 0 ? results[0] : { balance: 0, income: 0 };
-=======
         const finances = results.length > 0 ? results[0] : { balance: 0, income: 0, savings: 0 };
->>>>>>> e486554 (We integrated AI and worked on backend. Imporved the UI for better stability)
         res.json(finances);
     });
 });
@@ -238,47 +218,14 @@ app.post('/api/transactions', (req, res) => {
         return res.status(401).json({ message: "Not authenticated" });
     }
 
-<<<<<<< HEAD
-    const { name, mode, date, amount, type } = req.body;
-
-    if (!name || !mode || !date || isNaN(amount) || !type) {
-=======
     const { name, mode, date, amount, category, type } = req.body;
 
     if (!name || !mode || !date || isNaN(amount) || !category || !type) {
->>>>>>> e486554 (We integrated AI and worked on backend. Imporved the UI for better stability)
         return res.status(400).json({ message: "Invalid transaction data" });
     }
 
     const userId = req.session.user.id;
 
-<<<<<<< HEAD
-    // Insert the transaction
-    db.query(
-        "INSERT INTO transactions (user_id, name, mode, date, amount, type) VALUES (?, ?, ?, ?, ?, ?)",
-        [userId, name, mode, date, amount, type],
-        (err, result) => {
-            if (err) {
-                return res.status(500).json({ message: "Failed to add transaction" });
-            }
-
-            // Update user balance based on transaction type
-            const balanceUpdate = type === 'credit' ? amount : -amount;
-            db.query(
-                'UPDATE user_finances SET balance = balance + ? WHERE user_id = ?',
-                [balanceUpdate, userId],
-                (err) => {
-                    if (err) {
-                        return res.status(500).json({ message: "Failed to update balance" });
-                    }
-
-                    res.json({ 
-                        id: result.insertId, 
-                        message: "Transaction added successfully" 
-                    });
-                }
-            );
-=======
     db.beginTransaction(err => {
         if (err) {
             return res.status(500).json({ message: "Transaction failed" });
@@ -388,146 +335,29 @@ app.get('/api/savings', (req, res) => {
                 return res.status(500).json({ message: "Failed to fetch savings" });
             }
             res.json({ savings: results[0]?.savings || 0 });
->>>>>>> e486554 (We integrated AI and worked on backend. Imporved the UI for better stability)
         }
     );
 });
 
-<<<<<<< HEAD
-// ✅ Fetch Savings Data
-app.get('/api/savings', (req, res) => {
-    if (!req.session.user) {
-        return res.status(401).json({ message: "Not authenticated" });
-    }
-
-    db.query(
-        'SELECT savings FROM user_finances WHERE user_id = ?',
-        [req.session.user.id],
-        (err, results) => {
-            if (err) {
-                return res.status(500).json({ message: "Failed to fetch savings" });
-            }
-            res.json({ savings: results[0]?.savings || 0 });
-        }
-    );
-});
-
-// ✅ Add to Savings (Transfer from Balance to Savings)
-app.post('/api/savings/add', (req, res) => {
-    if (!req.session.user) {
-        return res.status(401).json({ message: "Not authenticated" });
-    }
-
-    const { amount } = req.body;
-    if (isNaN(amount) || amount <= 0) {
-        return res.status(400).json({ message: "Invalid amount" });
-    }
-
-    const userId = req.session.user.id;
-
-    // Start a transaction
-    db.beginTransaction(err => {
-        if (err) {
-            return res.status(500).json({ message: "Transaction failed" });
-        }
-
-        // Check if the user has enough balance
-        db.query(
-            'SELECT balance FROM user_finances WHERE user_id = ? FOR UPDATE',
-            [userId],
-            (err, results) => {
-                if (err) {
-                    return db.rollback(() => res.status(500).json({ message: "Database error" }));
-                }
-
-                const currentBalance = results[0]?.balance || 0;
-                if (currentBalance < amount) {
-                    return db.rollback(() => res.status(400).json({ message: "Insufficient balance" }));
-                }
-
-                // Deduct from balance and add to savings
-                db.query(
-                    'UPDATE user_finances SET balance = balance - ?, savings = savings + ? WHERE user_id = ?',
-                    [amount, amount, userId],
-                    (err) => {
-                        if (err) {
-                            return db.rollback(() => res.status(500).json({ message: "Failed to update finances" }));
-                        }
-
-                        // Record the savings transaction
-                        db.query(
-                            'INSERT INTO savings_history (user_id, type, amount) VALUES (?, "add", ?)',
-                            [userId, amount],
-                            (err) => {
-                                if (err) {
-                                    return db.rollback(() => res.status(500).json({ message: "Failed to record transaction" }));
-                                }
-
-                                // Commit the transaction
-                                db.commit(err => {
-                                    if (err) {
-                                        return db.rollback(() => res.status(500).json({ message: "Commit failed" }));
-                                    }
-                                    res.json({ message: "Added to savings successfully" });
-                                });
-                            }
-                        );
-                    }
-                );
-            }
-        );
-    });
-});
-
-// ✅ Remove from Savings (Transfer from Savings to Balance)
-=======
 // Add to Savings
->>>>>>> e486554 (We integrated AI and worked on backend. Imporved the UI for better stability)
 app.post('/api/savings/remove', (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ message: "Not authenticated" });
     }
 
-<<<<<<< HEAD
-    const { amount } = req.body;
-    if (isNaN(amount) || amount <= 0) {
-=======
     const { amount, date } = req.body;
     if (isNaN(amount)) {
->>>>>>> e486554 (We integrated AI and worked on backend. Imporved the UI for better stability)
         return res.status(400).json({ message: "Invalid amount" });
     }
 
     const userId = req.session.user.id;
-<<<<<<< HEAD
-
-    // Start a transaction
-=======
     const transactionDate = new Date(date);
 
->>>>>>> e486554 (We integrated AI and worked on backend. Imporved the UI for better stability)
     db.beginTransaction(err => {
         if (err) {
             return res.status(500).json({ message: "Transaction failed" });
         }
 
-<<<<<<< HEAD
-        // Check if the user has enough savings
-        db.query(
-            'SELECT savings FROM user_finances WHERE user_id = ? FOR UPDATE',
-            [userId],
-            (err, results) => {
-                if (err) {
-                    return db.rollback(() => res.status(500).json({ message: "Database error" }));
-                }
-
-                const currentSavings = results[0]?.savings || 0;
-                if (currentSavings < amount) {
-                    return db.rollback(() => res.status(400).json({ message: "Insufficient savings" }));
-                }
-
-                // Deduct from savings and add to balance
-=======
         // Add to savings history
         db.query(
             'INSERT INTO savings_history (user_id, type, amount, date) VALUES (?, "remove", ?, ?)',
@@ -538,35 +368,11 @@ app.post('/api/savings/remove', (req, res) => {
                 }
 
                 // Update user_finances table (increase balance and reduce savings)
->>>>>>> e486554 (We integrated AI and worked on backend. Imporved the UI for better stability)
                 db.query(
                     'UPDATE user_finances SET savings = savings - ?, balance = balance + ? WHERE user_id = ?',
                     [amount, amount, userId],
                     (err) => {
                         if (err) {
-<<<<<<< HEAD
-                            return db.rollback(() => res.status(500).json({ message: "Failed to update finances" }));
-                        }
-
-                        // Record the savings transaction
-                        db.query(
-                            'INSERT INTO savings_history (user_id, type, amount) VALUES (?, "remove", ?)',
-                            [userId, amount],
-                            (err) => {
-                                if (err) {
-                                    return db.rollback(() => res.status(500).json({ message: "Failed to record transaction" }));
-                                }
-
-                                // Commit the transaction
-                                db.commit(err => {
-                                    if (err) {
-                                        return db.rollback(() => res.status(500).json({ message: "Commit failed" }));
-                                    }
-                                    res.json({ message: "Removed from savings successfully" });
-                                });
-                            }
-                        );
-=======
                             return db.rollback(() => res.status(500).json({ message: "Failed to update savings and balance" }));
                         }
 
@@ -577,7 +383,6 @@ app.post('/api/savings/remove', (req, res) => {
                             }
                             res.json({ message: "Removed from savings successfully" });
                         });
->>>>>>> e486554 (We integrated AI and worked on backend. Imporved the UI for better stability)
                     }
                 );
             }
@@ -585,10 +390,6 @@ app.post('/api/savings/remove', (req, res) => {
     });
 });
 
-<<<<<<< HEAD
-// ✅ Fetch Savings History
-app.get('/api/savings/history', (req, res) => {
-=======
 // Remove from Savings
 app.post('/api/savings/remove', (req, res) => {
     if (!req.session.user) {
@@ -684,18 +485,11 @@ app.get('/api/savings-history', (req, res) => {
 
 // Fetch Total Expenses
 app.get('/api/total-expenses', (req, res) => {
->>>>>>> e486554 (We integrated AI and worked on backend. Imporved the UI for better stability)
     if (!req.session.user) {
         return res.status(401).json({ message: "Not authenticated" });
     }
 
     db.query(
-<<<<<<< HEAD
-        'SELECT * FROM savings_history WHERE user_id = ? ORDER BY date DESC',
-        [req.session.user.id],
-        (err, results) => {
-            if (err) {
-=======
         "SELECT SUM(amount) AS totalExpenses FROM transactions WHERE user_id = ? AND type = 'debit'",
         [req.session.user.id],
         (err, results) => {
@@ -746,7 +540,6 @@ app.get('/api/savings-history-range', (req, res) => {
         [userId, startDate, endDate],
         (err, results) => {
             if (err) {
->>>>>>> e486554 (We integrated AI and worked on backend. Imporved the UI for better stability)
                 return res.status(500).json({ message: "Failed to fetch savings history" });
             }
             res.json(results);
@@ -754,8 +547,6 @@ app.get('/api/savings-history-range', (req, res) => {
     );
 });
 
-<<<<<<< HEAD
-=======
 // Add Card to Database
 // Add Card to Database
 app.post('/api/cards/add', (req, res) => {
@@ -804,7 +595,6 @@ app.get('/api/cards', (req, res) => {
 });
 
 
->>>>>>> e486554 (We integrated AI and worked on backend. Imporved the UI for better stability)
 // Start Server
 const PORT = 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
