@@ -1,10 +1,10 @@
-# MoneyGuard
+# 💰MoneyGuard
 
-**MoneyGuard** is a web-based financial management tool designed to help users track their income, expenses, savings, and transactions. It provides a user-friendly interface with visual insights into financial data, making it easy to manage personal finances.
+**💰MoneyGuard** is a web-based financial management tool designed to help users track their income, expenses, savings, and transactions. It provides a user-friendly interface with visual insights into financial data, making it easy to manage personal finances.
 
 ---
 
-## Features
+## 🔥Features
 
 ### 1. **User Authentication**
 - **Login:** Secure login using username and password.
@@ -52,37 +52,37 @@
 
 ---
 
-## API Endpoints
+## ✅API Endpoints
 
-### Authentication
+### 1) Authentication
 - **POST `/api/login`:** User login.
 - **POST `/api/signup`:** User registration.
 - **POST `/api/logout`:** User logout.
 - **GET `/api/auth-check`:** Checks if the user is authenticated.
 
-### Financial Data
+### 2) Financial Data
 - **GET `/api/user-finances`:** Fetches the user's balance, income, and savings.
 - **POST `/api/update-finances`:** Updates the user's balance and income.
 
-### Transactions
+### 3) Transactions
 - **POST `/api/transactions`:** Adds a new transaction (expense or income).
 - **GET `/api/transactions`:** Fetches all transactions for the user.
 - **GET `/api/expenses-by-category`:** Fetches expenses grouped by category.
 
-### Savings
+### 4) Savings
 - **POST `/api/savings/add`:** Adds to savings.
 - **POST `/api/savings/remove`:** Removes from savings.
 - **GET `/api/savings`:** Fetches the current savings amount.
 - **GET `/api/savings-history`:** Fetches the savings history.
 - **GET `/api/savings-history-range`:** Fetches savings history between two dates.
 
-### Cards
+### 5) Cards
 - **POST `/api/cards/add`:** Adds a new payment card.
 - **GET `/api/cards`:** Fetches all cards for the user.
 
 ---
 
-## Technologies Used
+## 🧑‍💻Technologies Used
 
 ### Frontend
 - **HTML, CSS, JavaScript:** For building the user interface.
